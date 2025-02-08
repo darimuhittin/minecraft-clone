@@ -11,7 +11,7 @@
 #include <vector>
 #include "core/Mesh.h"
 #include "core/Primitives.h"
-
+#include "core/Block.h"
 // Utility function to load shader source from file
 std::string loadShaderSource(const char* shaderPath) {
     std::string shaderCode;
@@ -173,21 +173,17 @@ int main()
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
-    // Create mesh using primitive data
-    Mesh cubeMesh(Primitives::GetCubeVertices(), Primitives::GetCubeIndices());
-
-    // Add textures to mesh
-    cubeMesh.AddTexture("textures/blocks/grass_side.png", "side");
-    cubeMesh.AddTexture("textures/blocks/grass_top.png", "top");
-    cubeMesh.AddTexture("textures/blocks/dirt.png", "bottom");
 
     // Enable depth testing
     glEnable(GL_DEPTH_TEST);
 
     // Render loop
     float angle = 0.0f;
+
+    Block block(BlockType::GRASS, glm::vec3(0.0f, 0.0f, 0.0f));
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
+
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -200,7 +196,9 @@ int main()
         glUniform1i(glGetUniformLocation(shaderProgram, "textureBottom"), 2);
 
         // Create transformation matrices
+        
         glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, block.getPosition());
         glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
 
@@ -209,11 +207,7 @@ int main()
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-        // Bind textures and draw
-        cubeMesh.BindTextures();
-
-        // Draw cube faces with appropriate textures
-        cubeMesh.Draw(shaderProgram);
+        block.Draw(shaderProgram);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
