@@ -21,13 +21,16 @@ file(WRITE ${CMAKE_BINARY_DIR}/stb_image_impl.cpp
     "#define STB_IMAGE_IMPLEMENTATION\n#include <stb_image.h>\n")
 
 # Source files organization
-set(SOURCES
-    ${CMAKE_BINARY_DIR}/stb_image_impl.cpp
-    src/main.cpp
+file(GLOB_RECURSE SOURCES
+    "${CMAKE_SOURCE_DIR}/src/*.cpp"
 )
 
+# Add the stb_image implementation to sources
+list(APPEND SOURCES ${CMAKE_BINARY_DIR}/stb_image_impl.cpp)
+
 # Header files organization
-set(HEADERS
+file(GLOB_RECURSE HEADERS
+    "${CMAKE_SOURCE_DIR}/include/*.h"
 )
 
 # Create executable

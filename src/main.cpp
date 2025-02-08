@@ -5,6 +5,51 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include "core/Mesh.h"
+#include "core/Primitives.h"
+
+// Utility function to load shader source from file
+std::string loadShaderSource(const char* shaderPath) {
+    std::string shaderCode;
+    std::ifstream shaderFile;
+    
+    shaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+    try {
+        shaderFile.open(shaderPath);
+        std::stringstream shaderStream;
+        shaderStream << shaderFile.rdbuf();
+        shaderFile.close();
+        shaderCode = shaderStream.str();
+    }
+    catch (std::ifstream::failure& e) {
+        std::cout << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: " << shaderPath << std::endl;
+    }
+    
+    return shaderCode;
+}
+
+// Utility function to compile shader
+unsigned int compileShader(const char* shaderSource, GLenum shaderType) {
+    unsigned int shader = glCreateShader(shaderType);
+    glShaderSource(shader, 1, &shaderSource, NULL);
+    glCompileShader(shader);
+
+    // Check compilation status
+    int success;
+    char infoLog[512];
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        glGetShaderInfoLog(shader, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::" << (shaderType == GL_VERTEX_SHADER ? "VERTEX" : "FRAGMENT") 
+                 << "::COMPILATION_FAILED\n" << infoLog << std::endl;
+    }
+
+    return shader;
+}
 
 // Camera variables
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
@@ -103,50 +148,12 @@ int main()
         return -1;
     }
 
-    // Create vertex shader with camera transformation
-    const char* vertexShaderSource = R"(
-        #version 330 core
-        layout (location = 0) in vec3 aPos;
-        layout (location = 1) in vec2 aTexCoord;
-        out vec2 TexCoord;
-        uniform mat4 model;
-        uniform mat4 view;
-        uniform mat4 projection;
-        void main() {
-            gl_Position = projection * view * model * vec4(aPos, 1.0);
-            TexCoord = aTexCoord;
-        }
-    )";
-
-    // Create fragment shader with multiple textures
-    const char* fragmentShaderSource = R"(
-        #version 330 core
-        in vec2 TexCoord;
-        out vec4 FragColor;
-        uniform sampler2D textureSide;
-        uniform sampler2D textureTop;
-        uniform sampler2D textureBottom;
-        uniform int faceIndex;  // 0: side, 1: top, 2: bottom
-        void main() {
-            if (faceIndex == 1) {
-                FragColor = texture(textureTop, TexCoord);
-            } else if (faceIndex == 2) {
-                FragColor = texture(textureBottom, TexCoord);
-            } else {
-                FragColor = texture(textureSide, TexCoord);
-            }
-        }
-    )";
-
-    // Compile vertex shader
-    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-
-    // Compile fragment shader
-    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
+    // Load and compile shaders
+    std::string vertexShaderSource = loadShaderSource("shaders/vertex.glsl");
+    std::string fragmentShaderSource = loadShaderSource("shaders/fragment.glsl");
+    
+    unsigned int vertexShader = compileShader(vertexShaderSource.c_str(), GL_VERTEX_SHADER);
+    unsigned int fragmentShader = compileShader(fragmentShaderSource.c_str(), GL_FRAGMENT_SHADER);
 
     // Create shader program
     unsigned int shaderProgram = glCreateProgram();
@@ -154,128 +161,25 @@ int main()
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
 
+    // Check program linking status
+    int success;
+    char infoLog[512];
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+    }
+
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
-    // Create vertex data for cube
-    float vertices[] = {
-        // Front face
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  // bottom-left
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,  // bottom-right
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,  // top-right
-        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,  // top-left
-        // Back face
-        -0.5f, -0.5f, -0.5f,  1.0f, 0.0f,  // bottom-left
-         0.5f, -0.5f, -0.5f,  0.0f, 0.0f,  // bottom-right
-         0.5f,  0.5f, -0.5f,  0.0f, 1.0f,  // top-right
-        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  // top-left
-        // Left face
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,  // bottom-left
-        -0.5f, -0.5f,  0.5f,  1.0f, 0.0f,  // bottom-right
-        -0.5f,  0.5f,  0.5f,  1.0f, 1.0f,  // top-right
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,  // top-left
-        // Right face
-         0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  // bottom-left
-         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,  // bottom-right
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  // top-right
-         0.5f,  0.5f,  0.5f,  0.0f, 1.0f,  // top-left
-        // Top face
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,  // bottom-left
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  // bottom-right
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  // top-right
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,  // top-left
-        // Bottom face
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,  // bottom-left
-         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,  // bottom-right
-         0.5f, -0.5f,  0.5f,  1.0f, 1.0f,  // top-right
-        -0.5f, -0.5f,  0.5f,  0.0f, 1.0f   // top-left
-    };
+    // Create mesh using primitive data
+    Mesh cubeMesh(Primitives::GetCubeVertices(), Primitives::GetCubeIndices());
 
-    unsigned int indices[] = {
-        0,  1,  2,    2,  3,  0,   // Front face
-        4,  5,  6,    6,  7,  4,   // Back face
-        8,  9,  10,   10, 11, 8,   // Left face
-        12, 13, 14,   14, 15, 12,  // Right face
-        16, 17, 18,   18, 19, 16,  // Top face
-        20, 21, 22,   22, 23, 20   // Bottom face
-    };
-
-    // Create buffers
-    unsigned int VBO, VAO, EBO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
-
-    glBindVertexArray(VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    // Position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    // Texture coord attribute
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    // Load textures
-    unsigned int textureSide, textureTop, textureBottom;
-    
-    // Side texture (grass_side)
-    glGenTextures(1, &textureSide);
-    glBindTexture(GL_TEXTURE_2D, textureSide);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(true);
-    unsigned char* data = stbi_load("textures/blocks/grass_side.png", &width, &height, &nrChannels, 0);
-    if (data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    } else {
-        std::cout << "Failed to load grass side texture" << std::endl;
-    }
-    stbi_image_free(data);
-
-    // Top texture (grass_top)
-    glGenTextures(1, &textureTop);
-    glBindTexture(GL_TEXTURE_2D, textureTop);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    data = stbi_load("textures/blocks/grass_top.png", &width, &height, &nrChannels, 0);
-    if (data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    } else {
-        std::cout << "Failed to load grass top texture" << std::endl;
-    }
-    stbi_image_free(data);
-
-    // Bottom texture (dirt)
-    glGenTextures(1, &textureBottom);
-    glBindTexture(GL_TEXTURE_2D, textureBottom);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    data = stbi_load("textures/blocks/dirt.png", &width, &height, &nrChannels, 0);
-    if (data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    } else {
-        std::cout << "Failed to load dirt texture" << std::endl;
-    }
-    stbi_image_free(data);
+    // Add textures to mesh
+    cubeMesh.AddTexture("textures/blocks/grass_side.png", "side");
+    cubeMesh.AddTexture("textures/blocks/grass_top.png", "top");
+    cubeMesh.AddTexture("textures/blocks/dirt.png", "bottom");
 
     // Enable depth testing
     glEnable(GL_DEPTH_TEST);
@@ -305,37 +209,17 @@ int main()
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-        // Bind textures
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textureSide);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, textureTop);
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, textureBottom);
+        // Bind textures and draw
+        cubeMesh.BindTextures();
 
         // Draw cube faces with appropriate textures
-        glBindVertexArray(VAO);
-        
-        // Draw sides (faces 0-3)
-        glUniform1i(glGetUniformLocation(shaderProgram, "faceIndex"), 0);
-        glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, 0);
-        
-        // Draw top face
-        glUniform1i(glGetUniformLocation(shaderProgram, "faceIndex"), 1);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(24 * sizeof(unsigned int)));
-        
-        // Draw bottom face
-        glUniform1i(glGetUniformLocation(shaderProgram, "faceIndex"), 2);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(30 * sizeof(unsigned int)));
+        cubeMesh.Draw(shaderProgram);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
     // Cleanup
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
     glDeleteProgram(shaderProgram);
 
     glfwTerminate();
