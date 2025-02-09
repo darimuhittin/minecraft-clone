@@ -1,14 +1,20 @@
 #pragma once
+
 #include <vector>
+#include <glm/glm.hpp>
 
-class Primitives {
-public:
-    static const std::vector<float>& GetCubeVertices();
-    static const std::vector<unsigned int>& GetCubeIndices();
+namespace Primitives {
+    // Structure to hold vertex data
+    struct Vertex {
+        glm::vec3 position;
+        glm::vec3 normal;
+        glm::vec2 texCoords;
+    };
 
-private:
-    static std::vector<float> cubeVertices;
-    static std::vector<unsigned int> cubeIndices;
-    static void InitializeCube();
-    static bool initialized;
-}; 
+    // Functions to get cube data
+    std::vector<Vertex> GetCubeVertices();
+    std::vector<unsigned int> GetCubeIndices();
+    
+    // Functions to get flattened vertex data (position, normal, texcoords as float array)
+    std::vector<float> GetCubeVerticesFlat();
+} 

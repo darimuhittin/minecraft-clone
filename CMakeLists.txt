@@ -20,13 +20,24 @@ find_package(glm CONFIG REQUIRED)
 file(WRITE ${CMAKE_BINARY_DIR}/stb_image_impl.cpp
     "#define STB_IMAGE_IMPLEMENTATION\n#include <stb_image.h>\n")
 
-# Source files organization
-file(GLOB_RECURSE SOURCES
-    "${CMAKE_SOURCE_DIR}/src/*.cpp"
-    "${CMAKE_BINARY_DIR}/stb_image_impl.cpp"
+# Source files
+set(SOURCES
+    src/main.cpp
+    src/core/Block.cpp
+    src/core/GameObject.cpp
+    src/core/Mesh.cpp
+    src/core/Primitives.cpp
+    src/core/Scene.cpp
+    src/graphics/IndexBuffer.cpp
+    src/graphics/Renderer.cpp
+    src/graphics/Shader.cpp
+    src/graphics/Texture.cpp
+    src/graphics/VertexArray.cpp
+    src/graphics/VertexBuffer.cpp
+    ${CMAKE_BINARY_DIR}/stb_image_impl.cpp
 )
 
-# Header files organization
+# Header files
 file(GLOB_RECURSE HEADERS
     "${CMAKE_SOURCE_DIR}/include/*.h"
 )

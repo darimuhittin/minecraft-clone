@@ -1,6 +1,9 @@
 #pragma once
+
 #include <glm/glm.hpp>
-#include "Mesh.h"
+#include "core/GameObject.h"
+#include "core/Mesh.h"
+#include "graphics/Shader.h"
 
 enum class BlockType {
     GRASS,
@@ -8,14 +11,15 @@ enum class BlockType {
     STONE
 };
 
-class Block {
+class Block : public GameObject {
 public:
-    Block(BlockType type, const glm::vec3& position);
-    void Draw(unsigned int shaderProgram) const;
-    glm::vec3 getPosition() const;
-private:
-    BlockType type;
-    glm::vec3 position;
-    Mesh mesh;
-};
+    Block(BlockType type, const glm::vec3& position, const Shader& shader);
+    virtual ~Block() = default;
+    
+    virtual void Update(float deltaTime) override;
+    virtual void Render(Renderer& renderer) override;
 
+private:
+    BlockType m_Type;
+    Mesh m_Mesh;
+}; 

@@ -9,47 +9,14 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "core/Mesh.h"
+#include "graphics/Shader.h"
+#include "graphics/Renderer.h"
+#include "core/ECS/World.h"
+#include "core/ECS/Entity.h"
+#include "core/ECS/Components/TransformComponent.h"
+#include "core/ECS/Components/MeshComponent.h"
+#include "core/ECS/Systems/RenderSystem.h"
 #include "core/Primitives.h"
-#include "core/Block.h"
-// Utility function to load shader source from file
-std::string loadShaderSource(const char* shaderPath) {
-    std::string shaderCode;
-    std::ifstream shaderFile;
-    
-    shaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    try {
-        shaderFile.open(shaderPath);
-        std::stringstream shaderStream;
-        shaderStream << shaderFile.rdbuf();
-        shaderFile.close();
-        shaderCode = shaderStream.str();
-    }
-    catch (std::ifstream::failure& e) {
-        std::cout << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: " << shaderPath << std::endl;
-    }
-    
-    return shaderCode;
-}
-
-// Utility function to compile shader
-unsigned int compileShader(const char* shaderSource, GLenum shaderType) {
-    unsigned int shader = glCreateShader(shaderType);
-    glShaderSource(shader, 1, &shaderSource, NULL);
-    glCompileShader(shader);
-
-    // Check compilation status
-    int success;
-    char infoLog[512];
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(shader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::" << (shaderType == GL_VERTEX_SHADER ? "VERTEX" : "FRAGMENT") 
-                 << "::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-
-    return shader;
-}
 
 // Camera variables
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
@@ -148,73 +115,50 @@ int main()
         return -1;
     }
 
-    // Load and compile shaders
-    std::string vertexShaderSource = loadShaderSource("shaders/vertex.glsl");
-    std::string fragmentShaderSource = loadShaderSource("shaders/fragment.glsl");
-    
-    unsigned int vertexShader = compileShader(vertexShaderSource.c_str(), GL_VERTEX_SHADER);
-    unsigned int fragmentShader = compileShader(fragmentShaderSource.c_str(), GL_FRAGMENT_SHADER);
+    // Create renderer and world
+    Renderer renderer;
+    World world;
+
+    // Add render system
+    world.AddSystem(std::make_unique<RenderSystem>(renderer));
 
     // Create shader program
-    unsigned int shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
+    Shader shader("shaders/vertex.glsl", "shaders/fragment.glsl");
 
-    // Check program linking status
-    int success;
-    char infoLog[512];
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-    }
+    // Create a block entity
+    auto blockEntity = world.CreateEntity();
+    auto transform = blockEntity->AddComponent<TransformComponent>(glm::vec3(0.0f));
+    auto mesh = blockEntity->AddComponent<MeshComponent>(Primitives::GetCubeVerticesFlat(), Primitives::GetCubeIndices(), shader);
+    mesh->AddTexture("textures/blocks/grass_side.png", "side");
+    mesh->AddTexture("textures/blocks/grass_top.png", "top");
+    mesh->AddTexture("textures/blocks/dirt.png", "bottom");
 
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    // Set clear color
+    renderer.SetClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
-
-    // Enable depth testing
-    glEnable(GL_DEPTH_TEST);
-
-    // Render loop
-    float angle = 0.0f;
-
-    Block block(BlockType::GRASS, glm::vec3(0.0f, 0.0f, 0.0f));
+    // Game loop
+    float lastFrame = 0.0f;
     while (!glfwWindowShouldClose(window)) {
+        float currentFrame = static_cast<float>(glfwGetTime());
+        float deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
         processInput(window);
 
-
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        glUseProgram(shaderProgram);
-
-        // Set texture uniforms
-        glUniform1i(glGetUniformLocation(shaderProgram, "textureSide"), 0);
-        glUniform1i(glGetUniformLocation(shaderProgram, "textureTop"), 1);
-        glUniform1i(glGetUniformLocation(shaderProgram, "textureBottom"), 2);
-
-        // Create transformation matrices
-        
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, block.getPosition());
+        // Update scene matrices
         glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+        renderer.BeginScene(view, projection);
 
-        // Set matrix uniforms
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        // Clear screen
+        renderer.Clear();
 
-        block.Draw(shaderProgram);
+        // Update world
+        world.Update(deltaTime);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-
-    // Cleanup
-    glDeleteProgram(shaderProgram);
 
     glfwTerminate();
     return 0;

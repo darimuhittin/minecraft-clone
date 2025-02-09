@@ -1,65 +1,94 @@
 #include "core/Primitives.h"
 
-bool Primitives::initialized = false;
-std::vector<float> Primitives::cubeVertices;
-std::vector<unsigned int> Primitives::cubeIndices;
+namespace Primitives {
+    std::vector<Vertex> GetCubeVertices() {
+        std::vector<Vertex> vertices = {
+            // Front face
+            {{-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}},  // Bottom-left
+            {{ 0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}},  // Bottom-right
+            {{ 0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},  // Top-right
+            {{-0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},  // Top-left
 
-const std::vector<float>& Primitives::GetCubeVertices() {
-    if (!initialized) {
-        InitializeCube();
+            // Back face
+            {{ 0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f}}, // Bottom-left
+            {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 0.0f}}, // Bottom-right
+            {{-0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f}}, // Top-right
+            {{ 0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f}}, // Top-left
+
+            // Top face
+            {{-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},  // Bottom-left
+            {{ 0.5f,  0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},  // Bottom-right
+            {{ 0.5f,  0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}},  // Top-right
+            {{-0.5f,  0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}},  // Top-left
+
+            // Bottom face
+            {{-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 0.0f}}, // Bottom-left
+            {{ 0.5f, -0.5f, -0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f}}, // Bottom-right
+            {{ 0.5f, -0.5f,  0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 1.0f}}, // Top-right
+            {{-0.5f, -0.5f,  0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f}}, // Top-left
+
+            // Right face
+            {{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},  // Bottom-left
+            {{ 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},  // Bottom-right
+            {{ 0.5f,  0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}},  // Top-right
+            {{ 0.5f,  0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}},  // Top-left
+
+            // Left face
+            {{-0.5f, -0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}}, // Bottom-left
+            {{-0.5f, -0.5f,  0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}}, // Bottom-right
+            {{-0.5f,  0.5f,  0.5f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}}, // Top-right
+            {{-0.5f,  0.5f, -0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}}  // Top-left
+        };
+        return vertices;
     }
-    return cubeVertices;
-}
 
-const std::vector<unsigned int>& Primitives::GetCubeIndices() {
-    if (!initialized) {
-        InitializeCube();
+    std::vector<unsigned int> GetCubeIndices() {
+        std::vector<unsigned int> indices = {
+            // Front face
+            0, 1, 2,
+            2, 3, 0,
+            // Back face
+            4, 5, 6,
+            6, 7, 4,
+            // Top face
+            8, 9, 10,
+            10, 11, 8,
+            // Bottom face
+            12, 13, 14,
+            14, 15, 12,
+            // Right face
+            16, 17, 18,
+            18, 19, 16,
+            // Left face
+            20, 21, 22,
+            22, 23, 20
+        };
+        return indices;
     }
-    return cubeIndices;
-}
 
-void Primitives::InitializeCube() {
-    cubeVertices = {
-        // Front face
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  // bottom-left
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,  // bottom-right
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,  // top-right
-        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,  // top-left
-        // Back face
-        -0.5f, -0.5f, -0.5f,  1.0f, 0.0f,  // bottom-left
-         0.5f, -0.5f, -0.5f,  0.0f, 0.0f,  // bottom-right
-         0.5f,  0.5f, -0.5f,  0.0f, 1.0f,  // top-right
-        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  // top-left
-        // Left face
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,  // bottom-left
-        -0.5f, -0.5f,  0.5f,  1.0f, 0.0f,  // bottom-right
-        -0.5f,  0.5f,  0.5f,  1.0f, 1.0f,  // top-right
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,  // top-left
-        // Right face
-         0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  // bottom-left
-         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,  // bottom-right
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  // top-right
-         0.5f,  0.5f,  0.5f,  0.0f, 1.0f,  // top-left
-        // Top face
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,  // bottom-left
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  // bottom-right
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  // top-right
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,  // top-left
-        // Bottom face
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,  // bottom-left
-         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,  // bottom-right
-         0.5f, -0.5f,  0.5f,  1.0f, 1.0f,  // top-right
-        -0.5f, -0.5f,  0.5f,  0.0f, 1.0f   // top-left
-    };
-
-    cubeIndices = {
-        0,  1,  2,    2,  3,  0,   // Front face
-        4,  5,  6,    6,  7,  4,   // Back face
-        8,  9,  10,   10, 11, 8,   // Left face
-        12, 13, 14,   14, 15, 12,  // Right face
-        16, 17, 18,   18, 19, 16,  // Top face
-        20, 21, 22,   22, 23, 20   // Bottom face
-    };
-
-    initialized = true;
+    std::vector<float> GetCubeVerticesFlat() {
+        std::vector<float> flatVertices;
+        auto vertices = GetCubeVertices();
+        
+        // Reserve space for all vertices (8 floats per vertex: 3 for pos, 3 for normal, 2 for texcoords)
+        flatVertices.reserve(vertices.size() * 8);
+        
+        for (const auto& vertex : vertices) {
+            // Position
+            flatVertices.push_back(vertex.position.x);
+            flatVertices.push_back(vertex.position.y);
+            flatVertices.push_back(vertex.position.z);
+            
+            // Normal
+            flatVertices.push_back(vertex.normal.x);
+            flatVertices.push_back(vertex.normal.y);
+            flatVertices.push_back(vertex.normal.z);
+            
+            // Texture coordinates
+            flatVertices.push_back(vertex.texCoords.x);
+            flatVertices.push_back(vertex.texCoords.y);
+        }
+        
+        return flatVertices;
+    }
 } 
