@@ -24,24 +24,11 @@ file(WRITE ${CMAKE_BINARY_DIR}/stb_image_impl.cpp
     "#define STB_IMAGE_IMPLEMENTATION\n#include <stb_image.h>\n")
 
 # Source files
-set(SOURCES
-    src/main.cpp
-    src/core/Block.cpp
-    src/core/GameObject.cpp
-    src/core/Mesh.cpp
-    src/core/Primitives.cpp
-    src/core/Scene.cpp
-    src/core/Camera.cpp
-    src/core/MouseController.cpp
-    src/core/KeyboardController.cpp
-    src/graphics/IndexBuffer.cpp
-    src/graphics/Renderer.cpp
-    src/graphics/Shader.cpp
-    src/graphics/Texture.cpp
-    src/graphics/VertexArray.cpp
-    src/graphics/VertexBuffer.cpp
-    ${CMAKE_BINARY_DIR}/stb_image_impl.cpp
+file(GLOB_RECURSE SOURCES
+    "${CMAKE_SOURCE_DIR}/src/*.cpp"
+    "${CMAKE_BINARY_DIR}/stb_image_impl.cpp"
 )
+    
 
 # Header files
 file(GLOB_RECURSE HEADERS
@@ -54,6 +41,7 @@ add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 # Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/include
+    ${VCPKG_ROOT}/installed/x64-windows/include
 )
 
 # Link libraries
