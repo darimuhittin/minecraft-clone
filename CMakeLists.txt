@@ -7,8 +7,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Add vcpkg toolchain file if not already set
 if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-    set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
+    set(CMAKE_TOOLCHAIN_FILE "C:/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
 endif()
+
+# Add vcpkg installed packages to prefix path
+list(APPEND CMAKE_PREFIX_PATH "C:/vcpkg/installed/x64-windows")
 
 # Find required packages
 find_package(OpenGL REQUIRED)
