@@ -28,6 +28,9 @@ set(SOURCES
     src/core/Mesh.cpp
     src/core/Primitives.cpp
     src/core/Scene.cpp
+    src/core/Camera.cpp
+    src/core/MouseController.cpp
+    src/core/KeyboardController.cpp
     src/graphics/IndexBuffer.cpp
     src/graphics/Renderer.cpp
     src/graphics/Shader.cpp

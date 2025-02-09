@@ -17,70 +17,9 @@
 #include "core/ECS/Components/MeshComponent.h"
 #include "core/ECS/Systems/RenderSystem.h"
 #include "core/Primitives.h"
-
-// Camera variables
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-float yaw = -90.0f;
-float pitch = 0.0f;
-float lastX = 400.0f;
-float lastY = 300.0f;
-bool firstMouse = true;
-float cameraSpeed = 0.0005f;
-
-// Mouse callback function
-void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
-    if (firstMouse) {
-        lastX = xpos;
-        lastY = ypos;
-        firstMouse = false;
-    }
-
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos;
-    lastX = xpos;
-    lastY = ypos;
-
-    const float sensitivity = 0.1f;
-    xoffset *= sensitivity;
-    yoffset *= sensitivity;
-
-    yaw += xoffset;
-    pitch += yoffset;
-
-    if (pitch > 89.0f) pitch = 89.0f;
-    if (pitch < -89.0f) pitch = -89.0f;
-
-    glm::vec3 direction;
-    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    direction.y = sin(glm::radians(pitch));
-    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    cameraFront = glm::normalize(direction);
-}
-
-// Process keyboard input
-void processInput(GLFWwindow* window) {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
-
-    float currentSpeed = cameraSpeed;
-    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-        currentSpeed *= 2.0f;
-
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        cameraPos += currentSpeed * cameraFront;
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        cameraPos -= currentSpeed * cameraFront;
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * currentSpeed;
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * currentSpeed;
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-        cameraPos += cameraUp * currentSpeed;
-    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-        cameraPos -= cameraUp * currentSpeed;
-}
+#include "core/Camera.h"
+#include "core/MouseController.h"
+#include "core/KeyboardController.h"
 
 int main()
 {
@@ -105,15 +44,19 @@ int main()
 
     glfwMakeContextCurrent(window);
 
-    // Set up mouse input
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    glfwSetCursorPosCallback(window, mouse_callback);
-
     // Initialize GLAD
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
+
+    // Create camera and controllers
+    Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+    MouseController mouseController(camera);
+    KeyboardController keyboardController(camera);
+
+    // Initialize mouse controller
+    mouseController.Initialize(window);
 
     // Create renderer and world
     Renderer renderer;
@@ -143,10 +86,10 @@ int main()
         float deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        processInput(window);
+        keyboardController.ProcessInput(window, deltaTime);
 
         // Update scene matrices
-        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
         renderer.BeginScene(view, projection);
 
