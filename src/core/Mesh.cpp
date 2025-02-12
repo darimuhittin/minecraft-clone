@@ -18,9 +18,9 @@ Mesh::Mesh(const std::vector<float>& vertices, const std::vector<unsigned int>& 
 
     // Set up vertex attributes
     VertexBufferLayout layout;
-    layout.Push<float>(3); // Position
-    layout.Push<float>(3); // Normal
-    layout.Push<float>(2); // Texture coordinates
+    layout.PushFloat(3); // Position
+    layout.PushFloat(3); // Normal
+    layout.PushFloat(2); // Texture coordinates
     m_VAO->AddBuffer(*m_VBO, layout);
 }
 

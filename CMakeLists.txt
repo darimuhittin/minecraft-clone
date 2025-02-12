@@ -5,13 +5,18 @@ project(minecraft_clone)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Enable debug symbols
+set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g -O0")
+
 # Add vcpkg toolchain file if not already set
 if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     set(CMAKE_TOOLCHAIN_FILE "C:/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
 endif()
 
 # Add vcpkg installed packages to prefix path
-list(APPEND CMAKE_PREFIX_PATH "C:/vcpkg/installed/x64-windows")
+list(APPEND CMAKE_PREFIX_PATH "C:/vcpkg/installed/x64-mingw-dynamic")
 
 # Find required packages
 find_package(OpenGL REQUIRED)
@@ -41,7 +46,7 @@ add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 # Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/include
-    ${VCPKG_ROOT}/installed/x64-windows/include
+    ${VCPKG_ROOT}/installed/x64-mingw-dynamic/include
 )
 
 # Link libraries

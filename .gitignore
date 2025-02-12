@@ -13,7 +13,7 @@ cmake_install.cmake
 compile_commands.json
 
 # IDE specific files
-.vscode/
+# .vscode/
 *.swp
 *.swo
 .idea/
