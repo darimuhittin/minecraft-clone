@@ -35,6 +35,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_SAMPLES, 4); // Enable 4x MSAA
 
     // Create window
     GLFWwindow* window = glfwCreateWindow(800, 600, "Minecraft Clone - Debug", nullptr, nullptr);
@@ -51,6 +52,9 @@ int main()
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
+
+    // Enable multisampling
+    glEnable(GL_MULTISAMPLE);
 
     // Create camera and controllers
     Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
