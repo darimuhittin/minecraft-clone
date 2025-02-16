@@ -1,13 +1,16 @@
 #include "core/WorldGenerator.h"
 #include "core/BlockFactory.h"
+#include <iostream>
 
 void WorldGenerator::GenerateFlat(World& world, const Shader& shader, int size) {
+    std::cout << "Generating flat world of size " << size << "x" << size << std::endl;
     // Generate a flat world of size x size blocks
     for (int x = -size/2; x < size/2; x++) {
         for (int z = -size/2; z < size/2; z++) {
             // Create grass layer
-            BlockFactory::CreateBlock(world, BlockType::GRASS, 
-                glm::vec3(x, 0, z), shader);
+            glm::vec3 grassPos(x, 0, z);
+            std::cout << "Creating grass block at: (" << grassPos.x << ", " << grassPos.y << ", " << grassPos.z << ")" << std::endl;
+            BlockFactory::CreateBlock(world, BlockType::GRASS, grassPos, shader);
             
             // Create dirt layers beneath
             for (int y = -1; y > -3; y--) {

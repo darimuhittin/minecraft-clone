@@ -9,7 +9,12 @@ Camera::Camera(glm::vec3 position) :
     baseMovementSpeed(0.05f),
     movementSpeed(0.05f),
     mouseSensitivity(0.1f),
-    zoom(45.0f)
+    zoom(45.0f),
+    velocity(glm::vec3(0.0f)),
+    isOnGround(false),
+    isJumping(false),
+    physicsSystem(nullptr),
+    worldEntities(nullptr)
 {
     UpdateCameraVectors();
 }
@@ -46,21 +51,43 @@ void Camera::UpdateSpeed(GLFWwindow* window, float deltaTime) {
     }
 }
 
+void Camera::HandleJump(GLFWwindow* window) {
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+        physicsSystem->HandleJump(velocity, isOnGround, isJumping);
+    }
+}
+
+glm::vec3 Camera::CalculateNewPosition(const glm::vec3& moveDirection, float deltaTime) {
+    if (!physicsSystem || !worldEntities) return position + moveDirection;
+    
+    return physicsSystem->CalculateNewPosition(position, moveDirection, velocity, deltaTime, *worldEntities);
+}
+
 void Camera::ProcessKeyboard(GLFWwindow* window, float deltaTime) {
+    if (!physicsSystem || !worldEntities) return;
+
     UpdateSpeed(window, deltaTime);
+    HandleJump(window);
+
+    glm::vec3 moveDirection(0.0f);
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        position += movementSpeed * front;
+        moveDirection += front * movementSpeed;
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        position -= movementSpeed * front;
+        moveDirection -= front * movementSpeed;
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        position -= glm::normalize(glm::cross(front, up)) * movementSpeed;
+        moveDirection -= glm::normalize(glm::cross(front, up)) * movementSpeed;
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        position += glm::normalize(glm::cross(front, up)) * movementSpeed;
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-        position += up * movementSpeed;
-    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-        position -= up * movementSpeed;
+        moveDirection += glm::normalize(glm::cross(front, up)) * movementSpeed;
+
+    // Remove vertical component from movement direction
+    moveDirection.y = 0.0f;
+    if (glm::length(moveDirection) > 0.0f) {
+        moveDirection = glm::normalize(moveDirection) * movementSpeed;
+    }
+
+    position = CalculateNewPosition(moveDirection, deltaTime);
+    isOnGround = physicsSystem->IsOnGround(position, *worldEntities);
 }
 
 glm::mat4 Camera::GetViewMatrix() const {

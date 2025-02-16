@@ -16,12 +16,25 @@
 #include "core/ECS/Components/TransformComponent.h"
 #include "core/ECS/Components/MeshComponent.h"
 #include "core/ECS/Systems/RenderSystem.h"
+#include "core/ECS/Systems/PhysicsSystem.h"
 #include "core/Primitives.h"
 #include "core/Camera.h"
 #include "core/MouseController.h"
 #include "core/KeyboardController.h"
 #include "core/BlockFactory.h"
 #include "core/WorldGenerator.h"
+
+// Function to collect block positions from entities
+std::vector<glm::vec3> GetBlockPositions(const World& world) {
+    std::vector<glm::vec3> positions;
+    for (const auto& entity : world.GetEntities()) {
+        auto transform = entity->GetComponent<TransformComponent>();
+        if (transform) {
+            positions.push_back(transform->GetPosition());
+        }
+    }
+    return positions;
+}
 
 int main()
 {
@@ -55,28 +68,44 @@ int main()
 
     // Enable multisampling
     glEnable(GL_MULTISAMPLE);
+    
+    // Enable depth testing
+    glEnable(GL_DEPTH_TEST);
 
-    // Create camera and controllers
-    Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+    // Create renderer and world
+    Renderer renderer;
+    World world;
+
+    // Add systems
+    world.AddSystem(std::make_unique<RenderSystem>(renderer));
+    auto physicsSystem = std::make_unique<PhysicsSystem>();
+    PhysicsSystem* physicsPtr = physicsSystem.get();
+    world.AddSystem(std::move(physicsSystem));
+
+    // Create shader program
+    Shader shader("shaders/vertex.glsl", "shaders/fragment.glsl");
+
+    // Generate the world
+    WorldGenerator::GenerateFlat(world, shader, 16); // Generates a 16x16 flat world
+    
+    // Debug: Print all block positions
+    auto positions = GetBlockPositions(world);
+    std::cout << "\nBlock positions after generation:" << std::endl;
+    for (const auto& pos : positions) {
+        std::cout << "Block at: (" << pos.x << ", " << pos.y << ", " << pos.z << ")" << std::endl;
+    }
+    
+    // Create camera and controllers - spawn higher above blocks
+    Camera camera(glm::vec3(0.0f, 100.0f, 3.0f)); // Spawn well above blocks at y=5
+    camera.SetPhysicsSystem(physicsPtr);
+    camera.SetWorldEntities(&world.GetEntities());
+    
     MouseController mouseController(camera);
     KeyboardController keyboardController(camera);
 
     // Initialize mouse controller
     mouseController.Initialize(window);
 
-    // Create renderer and world
-    Renderer renderer;
-    World world;
-
-    // Add render system
-    world.AddSystem(std::make_unique<RenderSystem>(renderer));
-
-    // Create shader program
-    Shader shader("shaders/vertex.glsl", "shaders/fragment.glsl");
-
-    // Create a grass block entity
-    WorldGenerator::GenerateFlat(world, shader, 16); // Generates a 16x16 flat world
-    
     // Set clear color
     renderer.SetClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
@@ -86,7 +115,7 @@ int main()
         float currentFrame = static_cast<float>(glfwGetTime());
         float deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-
+        
         keyboardController.ProcessInput(window, deltaTime);
 
         // Update scene matrices
@@ -94,7 +123,8 @@ int main()
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
         renderer.BeginScene(view, projection);
 
-        // Clear screen
+        // Clear screen and depth buffer
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         renderer.Clear();
 
         // Update world

@@ -3,6 +3,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <GLFW/glfw3.h>
+#include <vector>
+#include "core/ECS/Systems/PhysicsSystem.h"
+#include "core/ECS/Entity.h"
 
 class Camera {
 public:
@@ -35,6 +38,20 @@ public:
     float mouseSensitivity;
     float zoom;
 
+    // Physics attributes
+    glm::vec3 velocity;
+    bool isOnGround;
+    bool isJumping;
+
+    // Physics system
+    void SetPhysicsSystem(PhysicsSystem* physics) { physicsSystem = physics; }
+    void SetWorldEntities(const std::vector<std::shared_ptr<Entity>>* entities) { worldEntities = entities; }
+
 private:
     void UpdateSpeed(GLFWwindow* window, float deltaTime);
+    void HandleJump(GLFWwindow* window);
+    glm::vec3 CalculateNewPosition(const glm::vec3& moveDirection, float deltaTime);
+    
+    PhysicsSystem* physicsSystem;
+    const std::vector<std::shared_ptr<Entity>>* worldEntities;
 }; 
