@@ -21,6 +21,7 @@
 #include "core/MouseController.h"
 #include "core/KeyboardController.h"
 #include "core/BlockFactory.h"
+#include "core/WorldGenerator.h"
 
 int main()
 {
@@ -70,8 +71,8 @@ int main()
     Shader shader("shaders/vertex.glsl", "shaders/fragment.glsl");
 
     // Create a grass block entity
-    auto blockEntity = BlockFactory::CreateBlock(world, BlockType::GRASS, glm::vec3(0.0f), shader);
-
+    WorldGenerator::GenerateFlat(world, shader, 16); // Generates a 16x16 flat world
+    
     // Set clear color
     renderer.SetClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
