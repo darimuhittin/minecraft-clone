@@ -26,14 +26,14 @@ Mesh::Mesh(const std::vector<float>& vertices, const std::vector<unsigned int>& 
 
 void Mesh::Draw(Renderer& renderer, const glm::mat4& transform) const
 {
-    if (m_Textures.empty()) {
+    if (m_TextureInfos.empty()) {
         // If no textures, use a default shader
         renderer.DrawMesh(*m_VAO, *m_EBO, m_DefaultShader, transform);
         return;
     }
 
     std::vector<std::shared_ptr<Texture>> textures;
-    for (const auto& textureInfo : m_Textures) {
+    for (const auto& textureInfo : m_TextureInfos) {
         textures.push_back(textureInfo.texture);
     }
 
@@ -45,5 +45,5 @@ void Mesh::AddTexture(const std::string& path, const std::string& type)
     TextureInfo textureInfo;
     textureInfo.texture = std::make_shared<Texture>(path);
     textureInfo.type = type;
-    m_Textures.push_back(textureInfo);
+    m_TextureInfos.push_back(textureInfo);
 } 

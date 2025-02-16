@@ -28,6 +28,6 @@ private:
     std::unique_ptr<VertexArray> m_VAO;
     std::unique_ptr<VertexBuffer> m_VBO;
     std::unique_ptr<IndexBuffer> m_EBO;
-    std::vector<TextureInfo> m_Textures;
+    std::vector<TextureInfo> m_TextureInfos;
     const Shader& m_DefaultShader;
 }; 

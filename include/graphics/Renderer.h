@@ -26,6 +26,8 @@ public:
                          const Shader& shader, const std::vector<std::shared_ptr<Texture>>& textures,
                          const glm::mat4& transform);
 
+    int getFaceTextureIndex(int face);
+
 private:
     glm::mat4 m_ViewMatrix;
     glm::mat4 m_ProjectionMatrix;
