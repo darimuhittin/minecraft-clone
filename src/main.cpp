@@ -72,9 +72,9 @@ int main()
     auto blockEntity = world.CreateEntity();
     auto transform = blockEntity->AddComponent<TransformComponent>(glm::vec3(0.0f));
     auto mesh = blockEntity->AddComponent<MeshComponent>(Primitives::GetCubeVerticesFlat(), Primitives::GetCubeIndices(), shader);
-    mesh->AddTexture("textures/blocks/grass_side.png", "side");
-    mesh->AddTexture("textures/blocks/grass_top.png", "top");
-    mesh->AddTexture("textures/blocks/dirt.png", "bottom");
+    mesh->AddTexture("textures/blocks/grass_side_processed.png", "side");
+    mesh->AddTexture("textures/blocks/grass_top_processed.png", "top");
+    mesh->AddTexture("textures/blocks/dirt_processed.png", "bottom");
 
     // Set clear color
     renderer.SetClearColor(0.2f, 0.3f, 0.3f, 1.0f);
