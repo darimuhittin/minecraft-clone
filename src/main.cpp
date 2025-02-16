@@ -20,6 +20,7 @@
 #include "core/Camera.h"
 #include "core/MouseController.h"
 #include "core/KeyboardController.h"
+#include "core/BlockFactory.h"
 
 int main()
 {
@@ -68,13 +69,8 @@ int main()
     // Create shader program
     Shader shader("shaders/vertex.glsl", "shaders/fragment.glsl");
 
-    // Create a block entity
-    auto blockEntity = world.CreateEntity();
-    auto transform = blockEntity->AddComponent<TransformComponent>(glm::vec3(0.0f));
-    auto mesh = blockEntity->AddComponent<MeshComponent>(Primitives::GetCubeVerticesFlat(), Primitives::GetCubeIndices(), shader);
-    mesh->AddTexture("textures/blocks/grass_side_processed.png", "side");
-    mesh->AddTexture("textures/blocks/grass_top_processed.png", "top");
-    mesh->AddTexture("textures/blocks/dirt_processed.png", "bottom");
+    // Create a grass block entity
+    auto blockEntity = BlockFactory::CreateBlock(world, BlockType::GRASS, glm::vec3(0.0f), shader);
 
     // Set clear color
     renderer.SetClearColor(0.2f, 0.3f, 0.3f, 1.0f);
