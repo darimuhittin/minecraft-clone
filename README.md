@@ -5,7 +5,7 @@ A Minecraft-like voxel game built with modern C++ and OpenGL.
 ## Author
 
 Muhittin Darı  
-Started: 04 March 2024
+Started: 04 Feb 2024
 
 ## Technologies
 
